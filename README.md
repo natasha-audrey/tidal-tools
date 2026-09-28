@@ -20,6 +20,10 @@ cargo build --release
 cp target/release/tidal-tools ./tidal-tools
 ```
 
+or install
+```sh
+cargo install --path .
+```
 
 ## Usage
 
