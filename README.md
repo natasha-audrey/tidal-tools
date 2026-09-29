@@ -1,5 +1,6 @@
 # tidal-tools
 
+Misc scripts for interacting with the Tidal API.
 
 ## Authentication
 
