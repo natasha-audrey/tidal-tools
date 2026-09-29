@@ -31,24 +31,35 @@ cargo install --path .
 Usage: tidal-tools <COMMAND>
 
 Commands:
-  playlist <PLAYLIST_URL>  Print each track as Artist(s) - Song
+  playlist  Print each track as Artist(s) - Song
+  help      Print this message or the help of the given subcommand(s)
 
-  -h, --help  Show help
-
-Run tidal-tools playlist --help for playlist options.
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
 ```
 
 ### Playlist
 
 ```
-Usage: tidal-tools playlist [--country CODE] <PLAYLIST_URL>
-
 Print each track as Artist(s) - Song, in playlist order.
 Set TIDAL_CLIENT_ID and TIDAL_CLIENT_SECRET from your Tidal developer app.
 Public playlists only. Multiple artists are separated by commas.
 
-  --country CODE  Two-letter country code (default: US)
-  -h, --help      Show help
+Usage: tidal-tools playlist [OPTIONS] <PLAYLIST_URL>
+
+Arguments:
+  <PLAYLIST_URL>
+          Full Tidal playlist URL
+
+Options:
+      --country <CODE>
+          Two-letter country code
+
+          [default: US]
+
+  -h, --help
+          Print help (see a summary with '-h')
 
 Redirect output with: tidal-tools playlist 'PLAYLIST_URL' > songs.txt
 ```

@@ -5,7 +5,22 @@ use std::{
     time::Duration,
 };
 
-const HELP: &str = "Usage: tidal-tools playlist [--country CODE] <PLAYLIST_URL>\n\nPrint each track as Artist(s) - Song, in playlist order.\nSet TIDAL_CLIENT_ID and TIDAL_CLIENT_SECRET from your Tidal developer app.\nPublic playlists only. Multiple artists are separated by commas.\n\n  --country CODE  Two-letter country code (default: US)\n  -h, --help      Show help\n\nRedirect output with: tidal-tools playlist 'PLAYLIST_URL' > songs.txt";
+#[derive(clap::Args)]
+#[command(after_help = "Redirect output with: tidal-tools playlist 'PLAYLIST_URL' > songs.txt")]
+pub struct Args {
+    /// Full Tidal playlist URL
+    pub playlist_url: String,
+    /// Two-letter country code
+    #[arg(long, value_name = "CODE", default_value = "US", value_parser = parse_country)]
+    pub country: String,
+}
+
+fn parse_country(input: &str) -> Result<String, String> {
+    if input.len() != 2 || !input.bytes().all(|b| b.is_ascii_alphabetic()) {
+        return Err("--country requires a two-letter code, such as US or GB.".into());
+    }
+    Ok(input.to_ascii_uppercase())
+}
 
 #[derive(Deserialize)]
 pub(crate) struct Artist {
@@ -75,38 +90,13 @@ pub(crate) fn format_track(track: Track) -> Result<String, String> {
     }
     Ok(format!("{} - {title}", names.join(", ")))
 }
-pub fn run(mut args: impl Iterator<Item = String>) -> Result<(), String> {
-    let mut input = None;
-    let mut country = "US".to_string();
-    while let Some(arg) = args.next() {
-        match arg.as_str() {
-            "-h" | "--help" => {
-                println!("{HELP}");
-                return Ok(());
-            }
-            "--country" => {
-                country = args
-                    .next()
-                    .ok_or("--country requires a two-letter code.")?
-                    .to_ascii_uppercase()
-            }
-            _ if arg.starts_with('-') => return Err(format!("Unknown option: {arg}\n\n{HELP}")),
-            _ => {
-                if input.replace(arg).is_some() {
-                    return Err(format!("Provide one playlist URL.\n\n{HELP}"));
-                }
-            }
-        }
-    }
-    let id = playlist_id(&input.ok_or(HELP)?)?;
-    if country.len() != 2 || !country.bytes().all(|b| b.is_ascii_alphabetic()) {
-        return Err("--country requires a two-letter code, such as US or GB.".into());
-    }
+pub fn run(args: Args) -> Result<(), String> {
+    let id = playlist_id(&args.playlist_url)?;
     let client = Client::builder()
         .timeout(Duration::from_secs(30))
         .build()
         .map_err(|e| e.to_string())?;
-    let lines = crate::tidal::playlist(&client, &id, &country)?;
+    let lines = crate::tidal::playlist(&client, &id, &args.country)?;
     // Fetch every page before writing, so failures cannot produce partial exports.
     let mut stdout = io::stdout().lock();
     for line in lines {
